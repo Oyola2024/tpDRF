@@ -1,0 +1,20 @@
+[project]
+name = "tp-drf"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Oyola2024", email = "f.oyola@itecriocuarto.org.ar" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.1.2",
+    "djangorestframework>=3.18.3",
+]
+
+[project.scripts]
+tp-drf = "tp_drf:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
