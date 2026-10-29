@@ -35,7 +35,7 @@ def articulo_detail(request, pk):
         if serializer.is_valid():
             serializer.save()
             return Response({"mensaje": "Articulo actualizado"}, status=status.HTTP_200_OK)
-        return Response({"mensaje": "No se actualizó porque no es válido"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"mensajes": "No se actualizó porque no es válido"}, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
         articulo = get_object_or_404(Articulo, pk=pk)
