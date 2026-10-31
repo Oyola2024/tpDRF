@@ -1,43 +1,67 @@
 from django.shortcuts import render
-from .models import Articulo
+from .models import Articulo, Proveedor
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import generics, mixins
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from .serializers import ArticuloSerializer
+from .serializers import ArticuloSerializer, ProveedorSerializer, ArticuloPublicSerializer
 # Create your views here.
 
-@api_view(['GET', 'POST'])
-def articulos(request):
-    if request.method == 'GET':
-        articulos = Articulo.objects.all()
-        serializer = ArticuloSerializer(articulos, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class ArticulosGenericAPIView(mixins.CreateModelMixin,mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = Articulo.objects.all().select_related("proveedor")
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ArticuloPublicSerializer
+        else:
+            return ArticuloSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+class ArticulosDetailGenericAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    queryset = Articulo.objects.all().select_related("proveedor")
+    serializer_class = ArticuloSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+
+
+# #------------------
+
+class ProveedoresAPIView(mixins.CreateModelMixin, mixins.ListModelMixin, generics.GenericAPIView):
+    queryset = Proveedor.objects.all()
+
+    def get_serializer_class(self):
+        return ProveedorSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
     
-    if request.method == 'POST':
-        serializer = ArticuloSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"mensaje": "Articulo creado"}, status=status.HTTP_201_CREATED)
-        return Response({"mensaje":"No se creó oirque no es válido"}, status=status.HTTP_400_BAD_REQUEST)
+class ProveedorDetailAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    queryset = Proveedor.objects.all()
+    serializer_class = ProveedorSerializer
 
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def articulo_detail(request, pk):
-    if request.method == 'GET':
-        articulo = get_object_or_404(Articulo, pk=pk)
-        serializer = ArticuloSerializer(articulo)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    if request.method == 'PUT':
-        articulo = get_object_or_404(Articulo, pk=pk)
-        serializer = ArticuloSerializer(articulo, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"mensaje": "Articulo actualizado"}, status=status.HTTP_200_OK)
-        return Response({"mensajes": "No se actualizó porque no es válido"}, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
-    if request.method == 'DELETE':
-        articulo = get_object_or_404(Articulo, pk=pk)
-        articulo.delete()
-        return Response({"mensaje": "Articulo eliminado"}, status=status.HTTP_204_NO_CONTENT)
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
