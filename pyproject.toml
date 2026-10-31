@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "django>=6.1.2",
     "djangorestframework>=3.18.3",
+    "djangorestframework-simplejwt>=5.5.1",
 ]
 
 [project.scripts]
@@ -18,3 +19,6 @@ tp-drf = "tp_drf:main"
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+package = false

@@ -1,67 +1,38 @@
-from django.shortcuts import render
 from .models import Articulo, Proveedor
-from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import generics, mixins
-from django.shortcuts import get_object_or_404
-from rest_framework import status
-from .serializers import ArticuloSerializer, ProveedorSerializer, ArticuloPublicSerializer
-# Create your views here.
+from rest_framework import viewsets
 
-class ArticulosGenericAPIView(mixins.CreateModelMixin,mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Articulo.objects.all().select_related("proveedor")
+from .serializers import ArticuloSerializer, ProveedorSerializer
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return ArticuloPublicSerializer
-        else:
-            return ArticuloSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
 
-class ArticulosDetailGenericAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+class ArticuloViewSet(viewsets.ModelViewSet):
     queryset = Articulo.objects.all().select_related("proveedor")
     serializer_class = ArticuloSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+    @action(detail=True, methods=['post'])
+    def publicar(self, request, pk=None):
+        articulo = self.get_object()
+        articulo.estado = 'Publicado'
+        articulo.save()
+        return Response({'status': 'Artículo publicado exitosamente'})
+        
+    # detail=False significa que aplica a la colección entera
+    # Ejemplo: /articulos/recientes/
+    @action(detail=False, methods=['get'])
+    def recientes(self, request):
+        recientes = Articulo.objects.order_by('-fecha_creacion')[:5]
+        serializer = self.get_serializer(recientes, many=True)
+        return Response(serializer.data)
 
 
 # #------------------
 
-class ProveedoresAPIView(mixins.CreateModelMixin, mixins.ListModelMixin, generics.GenericAPIView):
-    queryset = Proveedor.objects.all()
-
-    def get_serializer_class(self):
-        return ProveedorSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-
-    
-class ProveedorDetailAPIView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+class ProveedorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Proveedor.objects.all()
     serializer_class = ProveedorSerializer
-
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+    permission_classes = [IsAuthenticatedOrReadOnly]
